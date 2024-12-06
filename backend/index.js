@@ -10,7 +10,7 @@ app.use(express.json())
 app.use(cookieParser())
 dotenv.config()
 
-const allowedOrigins = ['http://localhost:5173'];
+const allowedOrigins = ['http://localhost:5173', 'https://link-craft-ten.vercel.app/'];
 app.use(cors({
     origin: (origin, callback) => {
         if (!origin || allowedOrigins.includes(origin)) {
