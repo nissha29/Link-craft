@@ -22,7 +22,7 @@ export default async function redirectURL(req, res) {
             { 
                 $push: { 
                     visitHistory: { 
-                        timestamp: new Date().toLocaleString()
+                        timestamp: new Date().toLocaleDateString()
                     } 
                 } 
             }

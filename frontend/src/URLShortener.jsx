@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import React, { useState } from 'react';
 import { 
   Link2, 
   Copy,  
@@ -17,6 +17,23 @@ const URLShortener = () => {
   const [copied, setCopied] = useState(false);
   const [animateSuccess, setAnimateSuccess] = useState(false);
 
+  const generateUrlHistory = async()=>{
+    try{
+      const response = await axios.get(
+        `${URL}/url/link/history`,
+        {
+          headers: {
+              'Content-Type': 'application/json'
+          },
+          withCredentials: true,
+        }
+      )
+      console.log(response.data)
+      setUrlHistory(response.data.history)
+    }catch(err){
+      console.log(`error while fetching history, ${err}`)
+    }
+  }
 
   const handleGenerateShortURL = async () => {
     if (!originalUrl.trim()) {
@@ -36,8 +53,9 @@ const URLShortener = () => {
         { originalUrl: originalUrl },
         {
           headers: {
-            'Content-Type': 'application/json'
-          }
+              'Content-Type': 'application/json'
+          },
+          withCredentials: true,
         }
       );
       
@@ -45,8 +63,9 @@ const URLShortener = () => {
       let shortURL = `${URL}/url/${shortId}`;
 
       setShortUrl(shortURL);
-      setAnimateSuccess(true)
-      setCopiedUrl(shortURL)
+      setAnimateSuccess(true);
+      setCopiedUrl(shortURL);
+      generateUrlHistory();
       
       setError('');
     } catch (err) {
@@ -64,7 +83,7 @@ const URLShortener = () => {
 
   const handleCopyUrl = async(shorturl)=>{
     try{
-      navigator.clipboard.writeText(shortUrl)
+      navigator.clipboard.writeText(shorturl)
       setCopied(true);
     
       const timer = setTimeout(() => {
@@ -74,6 +93,16 @@ const URLShortener = () => {
       return () => clearTimeout(timer);
     }catch(err){
       console.log(`error while copying to clipboard`)
+    }
+  }
+
+  const handleDeleteUrl = async(id)=>{
+    try{
+      await axios.delete(
+        `${URL}/url/link/${id}`,
+      )
+    }catch(err){
+      console.log(`error while deleting URL, ${err}`)
     }
   }
 
@@ -168,25 +197,8 @@ const URLShortener = () => {
                       }}
                       className="text-green-700 hover:text-green-900 bg-green-100 p-2 rounded-full"
                     >
-                    <Copy size={20} />
+                      <Copy size={20} />
                     </button>
-                    {copied && copiedUrl === shortUrl && (
-                      <div 
-                        className="
-                          absolute -top-8 left-1/2 transform -translate-x-1/2
-                          bg-black text-white 
-                          text-xs 
-                          px-2 py-1 
-                          rounded
-                          opacity-100 
-                          transition-opacity 
-                          duration-300
-                          z-10
-                        "
-                      >
-                        Copied
-                      </div>
-                    )}
                   </div>
                 </div>
               )}
@@ -211,34 +223,36 @@ const URLShortener = () => {
             <div className="space-y-4">
               {urlHistory.map((urlEntry) => (
                 <div 
-                  key={urlEntry.id} 
+                  key={urlEntry._id} 
                   className="bg-white p-4 rounded-xl border border-gray-200 
                   shadow-sm hover:shadow-md transition-all duration-300 
                   transform hover:-translate-y-1"
                 >
                   <div className="flex justify-between items-start mb-3">
                     <div>
-                      <p className="text-sm text-gray-600 truncate max-w-[250px]">
-                        {urlEntry.original}
+                      <p className="text-sm text-gray-600 truncate max-w-[200px]">
+                        {urlEntry.redirectURL}
                       </p>
                       <span className="text-xs text-gray-400">
-                        {urlEntry.dateCreated}
+                        {urlEntry.visitHistory.length > 0 
+                        ? urlEntry.visitHistory[urlEntry.visitHistory.length - 1].timestamp 
+                        : "No visits yet"}
                       </span>
                     </div>
                     <div className="flex space-x-2">
                       <button 
-                        onClick={() => handleCopyUrl(urlEntry.shortened)}
+                        onClick={() => handleCopyUrl(`${URL}/url/${urlEntry.shortId}`)}
                         className={`
                           p-2 rounded-full transition-all duration-300
-                          ${copiedUrl === urlEntry.shortened 
+                          ${copiedUrl === `${URL}/url/${urlEntry.shortId}` 
                             ? 'bg-green-100 text-green-600' 
                             : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
                           }`}
                       >
-                        <Copy size={16} />
+                        <Copy size={16} title="copied"/>
                       </button>
                       <button 
-                        onClick={() => handleDeleteUrl(urlEntry.id)}
+                        onClick={() => handleDeleteUrl(urlEntry._id)}
                         className="text-red-500 hover:bg-red-100 hover:text-red-600 p-2 rounded-full transition-all duration-300"
                       >
                         <Trash2 size={16} />
@@ -250,12 +264,12 @@ const URLShortener = () => {
                     <div className="flex items-center space-x-2">
                       <input 
                         type="text" 
-                        value={urlEntry.shortened} 
+                        value={ `${URL}/url/${urlEntry.shortId}` } 
                         readOnly 
-                        className="bg-gray-100 text-blue-600 px-3 py-1 rounded-md text-sm w-full truncate"
+                        className="bg-gray-100 text-blue-600 px-3 py-1 rounded-md text-sm w-full truncate outline-none"
                       />
                       <a 
-                        href={urlEntry.shortened} 
+                        href={ `${URL}/url/${urlEntry.shortId}` } 
                         target="_blank" 
                         rel="noopener noreferrer"
                         className="text-blue-500 hover:text-blue-700"
@@ -269,7 +283,7 @@ const URLShortener = () => {
                     <div className="flex items-center space-x-2">
                       <span className="text-gray-500 text-xs">Clicks:</span>
                       <span className="bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full text-xs">
-                        {urlEntry.clicks}
+                        {urlEntry.visitHistory.length}
                       </span>
                     </div>
                   </div>
