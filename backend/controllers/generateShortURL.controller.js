@@ -9,16 +9,19 @@ export default async function generateShortURL(req,res) {
 
         if(! userId){
             userId = generateUserId()
-            res.cookie(
-                'userId', 
-                userId, {  
-                    maxAge: 30 * 24 * 60 * 60 * 1000,
-                    sameSite: 'lax',
-                    httpOnly: true,
-                    secure: true,
-                }
-            );
+
+            let cookieOptions = {
+                maxAge: 30 * 24 * 60 * 60 * 1000,
+                sameSite: 'none',
+                httpOnly: true,
+                secure: true,
+                path: '/',
+                domain: 'link-craft.onrender.com'
+            };
+            
+            res.cookie('userId', userId, cookieOptions);
         }
+        
         const { originalUrl } = req.body
         if(! originalUrl){
             return res.status(400).json({
