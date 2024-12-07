@@ -16,8 +16,11 @@ export default async function generateShortURL(req,res) {
                 httpOnly: true,
                 secure: true,
                 path: '/',
-                domain: 'link-craft.onrender.com'
             };
+
+            if (process.env.NODE_ENV === 'production') {
+                cookieOptions.domain = 'link-craft.onrender.com';
+            }
             
             res.cookie('userId', userId, cookieOptions);
         }
