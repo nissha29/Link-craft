@@ -3,7 +3,6 @@ import urlModel from "../models/url.model.js";
 export default async function linkHistory(req,res) {
     try{
         const userId = req.cookies.userId
-        console.log(userId)
 
         if(! userId){
             return res.status(400).json({

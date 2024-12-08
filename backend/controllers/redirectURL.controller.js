@@ -15,14 +15,15 @@ export default async function redirectURL(req, res) {
             })
         }
 
-    
+        const date = new Date();
+        const timestamp = `${date.toLocaleDateString()}, ${date.toLocaleTimeString()}`
         await urlModel.updateOne({ 
                 shortId 
             }, 
             { 
                 $push: { 
                     visitHistory: { 
-                        timestamp: new Date().toLocaleDateString()
+                        timestamp,
                     } 
                 } 
             }

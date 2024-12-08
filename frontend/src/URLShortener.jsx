@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Link2, 
   Copy,  
@@ -13,9 +13,12 @@ const URLShortener = () => {
   const [shortUrl, setShortUrl] = useState('');
   const [urlHistory, setUrlHistory] = useState([]);
   const [error, setError] = useState('');
-  const [copiedUrl, setCopiedUrl] = useState('');
-  const [copied, setCopied] = useState(false);
+  const [copiedUrl, setCopiedUrl] = useState('')
   const [animateSuccess, setAnimateSuccess] = useState(false);
+
+  useEffect(() => {
+    generateUrlHistory();
+  }, []);
 
   const generateUrlHistory = async()=>{
     try{
@@ -28,7 +31,6 @@ const URLShortener = () => {
           withCredentials: true,
         }
       )
-      console.log(response.data)
       setUrlHistory(response.data.history)
     }catch(err){
       console.log(`error while fetching history, ${err}`)
@@ -41,7 +43,7 @@ const URLShortener = () => {
       return;
     }
   
-    const urlPattern = /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/;
+    const urlPattern = /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*(\?[^#]*)?(\#.*)?$/;
     if (!urlPattern.test(originalUrl)) {
       setError('Please enter a valid URL');
       return;
@@ -64,7 +66,6 @@ const URLShortener = () => {
 
       setShortUrl(shortURL);
       setAnimateSuccess(true);
-      setCopiedUrl(shortURL);
       generateUrlHistory();
       
       setError('');
@@ -84,11 +85,11 @@ const URLShortener = () => {
   const handleCopyUrl = async(shorturl)=>{
     try{
       navigator.clipboard.writeText(shorturl)
-      setCopied(true);
+      setCopiedUrl(shorturl)
     
       const timer = setTimeout(() => {
-        setCopied(false);
-      }, 1500);
+        setCopiedUrl('')
+      }, 1000);
 
       return () => clearTimeout(timer);
     }catch(err){
@@ -101,6 +102,9 @@ const URLShortener = () => {
       await axios.delete(
         `${URL}/url/link/${id}`,
       )
+      setUrlHistory(prevHistory => 
+        prevHistory.filter(urlEntry => urlEntry._id !== id)
+      );
     }catch(err){
       console.log(`error while deleting URL, ${err}`)
     }
@@ -193,7 +197,6 @@ const URLShortener = () => {
                     <button 
                       onClick={() => {
                         handleCopyUrl(shortUrl);
-                        setCopiedUrl(shortUrl);
                       }}
                       className="text-green-700 hover:text-green-900 bg-green-100 p-2 rounded-full"
                     >
@@ -241,15 +244,16 @@ const URLShortener = () => {
                     </div>
                     <div className="flex space-x-2">
                       <button 
-                        onClick={() => handleCopyUrl(`${URL}/url/${urlEntry.shortId}`)}
+                        onClick={() => {
+                          const shortUrl = `${URL}/url/${urlEntry.shortId}`
+                          handleCopyUrl(shortUrl)}
+                        }
                         className={`
                           p-2 rounded-full transition-all duration-300
-                          ${copiedUrl === `${URL}/url/${urlEntry.shortId}` 
-                            ? 'bg-green-100 text-green-600' 
-                            : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
-                          }`}
+                          ${copiedUrl === `${URL}/url/${urlEntry.shortId}` ? "bg-green-200" : ""}
+                        `}
                       >
-                        <Copy size={16} title="copied"/>
+                        <Copy size={16}/>
                       </button>
                       <button 
                         onClick={() => handleDeleteUrl(urlEntry._id)}
@@ -274,7 +278,12 @@ const URLShortener = () => {
                         rel="noopener noreferrer"
                         className="text-blue-500 hover:text-blue-700"
                       >
-                        <ExternalLink size={16} />
+                        <ExternalLink 
+                          size={16} 
+                          onClick={()=>{
+                            generateUrlHistory()
+                          }}
+                        />
                       </a>
                     </div>
                   </div>
