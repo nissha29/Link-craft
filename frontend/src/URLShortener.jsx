@@ -249,7 +249,7 @@ const URLShortener = () => {
                           handleCopyUrl(shortUrl)}
                         }
                         className={`
-                          p-2 rounded-full transition-all duration-300
+                          p-2 rounded-full transition-all duration-300 hover:bg-gray-200
                           ${copiedUrl === `${URL}/url/${urlEntry.shortId}` ? "bg-green-200" : ""}
                         `}
                       >

@@ -16,7 +16,7 @@ export default async function redirectURL(req, res) {
         }
 
         const date = new Date();
-        const timestamp = `${date.toLocaleDateString()}, ${date.toLocaleTimeString()}`
+        const timestamp = `${date.toLocaleDateString()}`
         await urlModel.updateOne({ 
                 shortId 
             }, 
